@@ -7,116 +7,163 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: const Color(0xFFE58AE6),
+      brightness: Brightness.light,
     );
-  }
-}
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+    return MaterialApp(
+      title: 'Anime Chat',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: colorScheme,
+        scaffoldBackgroundColor: const Color(0xFFFFF3FB),
+        appBarTheme: const AppBarTheme(
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: Color(0xFFFFE3F7),
+          foregroundColor: Color(0xFF5A2C76),
+          titleTextStyle: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF5A2C76),
+          ),
+        ),
+        textTheme: const TextTheme(
+          titleMedium: TextStyle(fontWeight: FontWeight.w700),
+          bodyMedium: TextStyle(color: Color(0xFF5F4C71)),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+      home: const ChatListScreen(),
+    );
+  }
+}
+
+class ChatListScreen extends StatelessWidget {
+  const ChatListScreen({super.key});
+
+  static const List<ChatItem> chats = [
+    ChatItem(
+      name: 'Marin Kitagawa (Марин Китагава)',
+      message: "Let's make a new cosplay!",
+      timestamp: '09:41',
+      unreadCount: 3,
+      avatarColor: Color(0xFFFFA4D7),
+    ),
+    ChatItem(
+      name: 'Mai Sakurajima (Май Сакураджима)',
+      message: 'Can you see me?',
+      timestamp: '08:12',
+      unreadCount: 1,
+      avatarColor: Color(0xFFA5C7FF),
+    ),
+    ChatItem(
+      name: 'Rem',
+      message: 'I made tea for you. Take a break ☕',
+      timestamp: 'Yesterday',
+      unreadCount: 0,
+      avatarColor: Color(0xFF9FD9FF),
+    ),
+    ChatItem(
+      name: 'Megumin',
+      message: 'Explosion magic is ready! ✨',
+      timestamp: 'Yesterday',
+      unreadCount: 5,
+      avatarColor: Color(0xFFFFC58A),
+    ),
+    ChatItem(
+      name: 'Asuna',
+      message: 'Party at 8? I will bring snacks.',
+      timestamp: 'Mon',
+      unreadCount: 2,
+      avatarColor: Color(0xFFFFB4B4),
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Anime Chat'),
+      ),
+      body: ListView.builder(
+        itemCount: chats.length,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        itemBuilder: (context, index) {
+          final chat = chats[index];
+          return ListTile(
+            leading: CircleAvatar(
+              backgroundColor: chat.avatarColor,
+              child: Text(
+                _initials(chat.name),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            title: Text(chat.name),
+            subtitle: Text(chat.message, maxLines: 1, overflow: TextOverflow.ellipsis),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  chat.timestamp,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 6),
+                if (chat.unreadCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: colors.primary,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '${chat.unreadCount}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  )
+                else
+                  const SizedBox(height: 20),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
+
+  static String _initials(String name) {
+    final words = name.split(' ').where((word) => word.isNotEmpty).take(2).toList();
+    return words
+        .map((word) => word.isEmpty ? '' : word.substring(0, 1).toUpperCase())
+        .join();
+  }
+}
+
+class ChatItem {
+  const ChatItem({
+    required this.name,
+    required this.message,
+    required this.timestamp,
+    required this.unreadCount,
+    required this.avatarColor,
+  });
+
+  final String name;
+  final String message;
+  final String timestamp;
+  final int unreadCount;
+  final Color avatarColor;
 }
