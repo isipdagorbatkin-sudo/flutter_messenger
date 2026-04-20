@@ -1,85 +1,114 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
-class ChatMessage {
-  const ChatMessage({
-    required this.sender,
-    required this.text,
-    required this.avatarUrl,
-    required this.isMe,
-  });
-
-  final String sender;
-  final String text;
-  final String avatarUrl;
-  final bool isMe;
-}
+import 'package:flutter_messenger/chat_utils.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  const ChatScreen({
+    super.key,
+    required this.peerId,
+    required this.peerName,
+    this.peerAvatarUrl,
+  });
+
+  final String peerId;
+  final String peerName;
+  final String? peerAvatarUrl;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  static const _maiAvatar =
-      'https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/Mai_Sakurajima.jpg/320px-Mai_Sakurajima.jpg';
-  static const _marinAvatar =
-      'https://upload.wikimedia.org/wikipedia/en/thumb/a/a0/Marin_Kitagawa.png/320px-Marin_Kitagawa.png';
-
   final TextEditingController _controller = TextEditingController();
-  final List<ChatMessage> _messages = [
-    const ChatMessage(
-      sender: 'Marin Kitagawa',
-      text: 'I found the cutest cosplay idea for us ✨',
-      avatarUrl: _marinAvatar,
-      isMe: false,
-    ),
-    const ChatMessage(
-      sender: 'Mai Sakurajima',
-      text: 'Send me the details. I\'m curious 🌙',
-      avatarUrl: _maiAvatar,
-      isMe: true,
-    ),
-    const ChatMessage(
-      sender: 'Marin Kitagawa',
-      text: 'Meet me after school and I will show everything 💖',
-      avatarUrl: _marinAvatar,
-      isMe: false,
-    ),
-  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onTextChanged);
+  }
+
+  User? get _currentUser => FirebaseAuth.instance.currentUser;
+
+  CollectionReference<Map<String, dynamic>> _messagesCollection(String chatId) =>
+      FirebaseFirestore.instance
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages');
 
   @override
   void dispose() {
+    _controller.removeListener(_onTextChanged);
     _controller.dispose();
     super.dispose();
   }
 
-  void _sendMessage() {
+  void _onTextChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _sendMessage() async {
     final text = _controller.text.trim();
-    if (text.isEmpty) {
+    final user = _currentUser;
+    if (text.isEmpty || user == null) {
       return;
     }
+    final chatId = buildPrivateChatId(user.uid, widget.peerId);
 
-    setState(() {
-      _messages.add(ChatMessage(
-        sender: 'Mai Sakurajima',
-        text: text,
-        avatarUrl: _maiAvatar,
-        isMe: true,
-      ));
-      _controller.clear();
+    await _messagesCollection(chatId).add({
+      'text': text,
+      'senderId': user.uid,
+      'receiverId': widget.peerId,
+      'createdAt': FieldValue.serverTimestamp(),
     });
+
+    _controller.clear();
   }
 
   @override
   Widget build(BuildContext context) {
+    final user = _currentUser;
     final hasText = _controller.text.trim().isNotEmpty;
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Please sign in first'),
+        ),
+      );
+    }
+    final chatId = buildPrivateChatId(user.uid, widget.peerId);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Anime Messenger'),
-        centerTitle: true,
+        titleSpacing: 0,
+        title: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: const Color(0xFFFF8FD6),
+              backgroundImage:
+                  widget.peerAvatarUrl != null && widget.peerAvatarUrl!.isNotEmpty
+                      ? NetworkImage(widget.peerAvatarUrl!)
+                      : null,
+              child:
+                  widget.peerAvatarUrl == null || widget.peerAvatarUrl!.isEmpty
+                      ? Text(
+                        buildAvatarInitial(widget.peerName),
+                        style: const TextStyle(color: Color(0xFF2D163F)),
+                      )
+                      : null,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                widget.peerName,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -92,74 +121,78 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Column(
           children: [
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final message = _messages[index];
-                  final bubbleColor =
-                      message.isMe
-                          ? const Color(0xFFD2A4FF)
-                          : const Color(0xFFFFB8E6);
-                  return Align(
-                    alignment:
-                        message.isMe
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        if (!message.isMe)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: CircleAvatar(
-                              backgroundImage: NetworkImage(message.avatarUrl),
-                            ),
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream:
+                    _messagesCollection(chatId)
+                        .orderBy('createdAt', descending: true)
+                        .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No messages yet. Say hi! 💫',
+                        style: TextStyle(color: Color(0xFFBFA9D9), fontSize: 16),
+                      ),
+                    );
+                  }
+
+                  final messages = snapshot.data!.docs;
+                  return ListView.builder(
+                    reverse: true,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) {
+                      final data = messages[index].data();
+                      final messageText = (data['text'] as String?)?.trim();
+                      final isMe = data['senderId'] == user.uid;
+                      final bubbleColor =
+                          isMe
+                              ? const Color(0xFFD2A4FF)
+                              : const Color(0xFFFFB8E6);
+
+                      return Align(
+                        alignment:
+                            isMe ? Alignment.centerRight : Alignment.centerLeft,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
                           ),
-                        Flexible(
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(vertical: 6),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: bubbleColor,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  message.sender,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF3B2353),
-                                  ),
+                          decoration: BoxDecoration(
+                            color: bubbleColor,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isMe ? 'You' : widget.peerName,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF3B2353),
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  message.text,
-                                  style: const TextStyle(
-                                    color: Color(0xFF2D163F),
-                                    fontSize: 14,
-                                  ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                messageText != null && messageText.isNotEmpty
+                                    ? messageText
+                                    : '[Message unavailable]',
+                                style: const TextStyle(
+                                  color: Color(0xFF2D163F),
+                                  fontSize: 14,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
-                        if (message.isMe)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: CircleAvatar(
-                              backgroundImage: NetworkImage(message.avatarUrl),
-                            ),
-                          ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
               ),
@@ -174,7 +207,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     Expanded(
                       child: TextField(
                         controller: _controller,
-                        onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
                           hintText: 'Type your message...',
                           hintStyle: const TextStyle(color: Color(0xFFBFA9D9)),
@@ -186,6 +218,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         ),
                         style: const TextStyle(color: Color(0xFFFFE8FA)),
+                        onSubmitted: (_) => _sendMessage(),
                       ),
                     ),
                     const SizedBox(width: 8),

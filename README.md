@@ -1,16 +1,20 @@
 # flutter_messenger
 
-A new Flutter project.
+Flutter messenger with Firebase Auth + Firestore private 1-on-1 chats.
 
-## Getting Started
+## Firestore data model
 
-This project is a starting point for a Flutter application.
+- `users/{userId}`: profile docs used by `UsersListScreen`
+- `chats/{chatId}/messages/{messageId}`: private messages
+- `chatId` format: two UIDs sorted and joined with `_` (example: `uidA_uidB`)
 
-A few resources to get you started if this is your first Flutter project:
+## Firestore rules (concept)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Use rules that only allow participants to access their chat:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```txt
+match /chats/{chatId}/messages/{messageId} {
+  allow read, write: if request.auth != null
+    && request.auth.uid in chatId.split('_');
+}
+```

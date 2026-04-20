@@ -1,37 +1,29 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:flutter_messenger/main.dart';
+import 'package:flutter_messenger/chat_utils.dart';
 
 void main() {
-  testWidgets('shows anime themed chat screen elements', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(const MyApp());
-
-    expect(find.text('Anime Messenger'), findsOneWidget);
-    expect(find.text('Marin Kitagawa'), findsWidgets);
-    expect(find.text('Mai Sakurajima'), findsWidgets);
-    expect(find.byType(TextField), findsOneWidget);
+  test('buildPrivateChatId creates same id regardless of uid order', () {
+    final id1 = buildPrivateChatId('alice', 'bob');
+    final id2 = buildPrivateChatId('bob', 'alice');
+    expect(id1, id2);
+    expect(id1, 'alice_bob');
   });
 
-  testWidgets('send button enables with text and appends message', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(const MyApp());
+  test('buildPrivateChatId handles equal uids', () {
+    expect(buildPrivateChatId('same', 'same'), 'same_same');
+  });
 
-    IconButton sendButton = tester.widget(find.byIcon(Icons.send_rounded));
-    expect(sendButton.onPressed, isNull);
+  test('buildAvatarInitial handles empty and normal names', () {
+    expect(buildAvatarInitial('Mai'), 'M');
+    expect(buildAvatarInitial('   '), '?');
+    expect(buildAvatarInitial('m'), 'M');
+    expect(buildAvatarInitial('mai'), 'M');
+    expect(buildAvatarInitial('🌸sakura'), '🌸');
+  });
 
-    await tester.enterText(find.byType(TextField), 'See you at the anime cafe!');
-    await tester.pump();
-
-    sendButton = tester.widget(find.byIcon(Icons.send_rounded));
-    expect(sendButton.onPressed, isNotNull);
-
-    await tester.tap(find.byIcon(Icons.send_rounded));
-    await tester.pump();
-
-    expect(find.text('See you at the anime cafe!'), findsOneWidget);
+  test('buildDisplayName picks username then email then fallback', () {
+    expect(buildDisplayName({'username': 'Mai', 'email': 'mai@test.com'}), 'Mai');
+    expect(buildDisplayName({'email': 'mai@test.com'}), 'mai@test.com');
+    expect(buildDisplayName(<String, dynamic>{}), 'Unknown user');
   });
 }
