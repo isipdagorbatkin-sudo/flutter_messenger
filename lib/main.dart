@@ -9,17 +9,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFFE58AE6),
-      brightness: Brightness.light,
-    );
-
     return MaterialApp(
       title: 'Anime Chat',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: colorScheme,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFE58AE6),
+          brightness: Brightness.light,
+        ),
         scaffoldBackgroundColor: const Color(0xFFFFF3FB),
         appBarTheme: const AppBarTheme(
           centerTitle: true,
@@ -120,6 +118,7 @@ class ChatListScreen extends StatelessWidget {
                 const SizedBox(height: 6),
                 if (chat.unreadCount > 0)
                   Container(
+                    key: ValueKey('unread-${chat.name}'),
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: colors.primary,
@@ -145,10 +144,16 @@ class ChatListScreen extends StatelessWidget {
   }
 
   static String _initials(String name) {
-    final words = name.split(' ').where((word) => word.isNotEmpty).take(2).toList();
-    return words
-        .map((word) => word.isEmpty ? '' : word.substring(0, 1).toUpperCase())
-        .join();
+    final sanitized = name.replaceAll(RegExp(r'[^A-Za-zА-Яа-яЁё ]'), ' ').trim();
+    final words = sanitized
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .take(2)
+        .toList();
+    if (words.isEmpty) {
+      return '?';
+    }
+    return words.map((word) => word.substring(0, 1).toUpperCase()).join();
   }
 }
 

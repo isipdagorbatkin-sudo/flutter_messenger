@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter_messenger/main.dart';
@@ -20,8 +21,15 @@ void main() {
   ) async {
     await tester.pumpWidget(const MyApp());
 
+    expect(
+      find.byKey(const ValueKey('unread-Marin Kitagawa (Марин Китагава)')),
+      findsOneWidget,
+    );
     expect(find.text('3'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
     expect(find.text('5'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
+    expect(find.byKey(const ValueKey('unread-Megumin')), findsOneWidget);
+    expect(find.byKey(const ValueKey('unread-Asuna')), findsOneWidget);
   });
 }
