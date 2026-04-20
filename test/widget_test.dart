@@ -12,4 +12,9 @@ void main() {
   test('buildPrivateChatId handles equal uids', () {
     expect(buildPrivateChatId('same', 'same'), 'same_same');
   });
+
+  test('buildAvatarInitial handles empty and normal names', () {
+    expect(buildAvatarInitial('Mai'), 'M');
+    expect(buildAvatarInitial('   '), '?');
+  });
 }

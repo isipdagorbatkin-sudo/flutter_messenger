@@ -2,19 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_messenger/chat_screen.dart';
+import 'package:flutter_messenger/chat_utils.dart';
 
 class UsersListScreen extends StatelessWidget {
   const UsersListScreen({super.key, required this.currentUserId});
 
   final String currentUserId;
-
-  String _initial(String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
-      return '?';
-    }
-    return trimmed.substring(0, 1).toUpperCase();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +100,7 @@ class UsersListScreen extends StatelessWidget {
                       child:
                           avatarUrl == null || avatarUrl.isEmpty
                               ? Text(
-                                _initial(displayName),
+                                buildAvatarInitial(displayName),
                                 style: const TextStyle(color: Color(0xFF2D163F)),
                               )
                               : null,

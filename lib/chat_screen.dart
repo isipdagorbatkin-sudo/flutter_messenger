@@ -22,14 +22,6 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
 
-  String _initial(String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) {
-      return '?';
-    }
-    return trimmed.substring(0, 1).toUpperCase();
-  }
-
   User? get _currentUser => FirebaseAuth.instance.currentUser;
 
   String get _chatId {
@@ -97,7 +89,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child:
                   widget.peerAvatarUrl == null || widget.peerAvatarUrl!.isEmpty
                       ? Text(
-                        _initial(widget.peerName),
+                        buildAvatarInitial(widget.peerName),
                         style: const TextStyle(color: Color(0xFF2D163F)),
                       )
                       : null,
