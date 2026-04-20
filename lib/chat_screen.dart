@@ -22,6 +22,12 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onTextChanged);
+  }
+
   User? get _currentUser => FirebaseAuth.instance.currentUser;
 
   String get _chatId {
@@ -40,8 +46,15 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    _controller.removeListener(_onTextChanged);
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onTextChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _sendMessage() async {
@@ -59,7 +72,6 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     _controller.clear();
-    setState(() {});
   }
 
   @override
@@ -171,7 +183,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   color: Color(0xFF3B2353),
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 2),
                               Text(
                                 (data['text'] as String?) ?? '',
                                 style: const TextStyle(
@@ -198,7 +210,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     Expanded(
                       child: TextField(
                         controller: _controller,
-                        onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
                           hintText: 'Type your message...',
                           hintStyle: const TextStyle(color: Color(0xFFBFA9D9)),
