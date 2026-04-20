@@ -16,5 +16,8 @@ void main() {
   test('buildAvatarInitial handles empty and normal names', () {
     expect(buildAvatarInitial('Mai'), 'M');
     expect(buildAvatarInitial('   '), '?');
+    expect(buildAvatarInitial('m'), 'M');
+    expect(buildAvatarInitial('mai'), 'M');
+    expect(buildAvatarInitial('🌸sakura'), '🌸');
   });
 }

@@ -30,18 +30,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   User? get _currentUser => FirebaseAuth.instance.currentUser;
 
-  String get _chatId {
-    final user = _currentUser;
-    if (user == null) {
-      return '';
-    }
-    return buildPrivateChatId(user.uid, widget.peerId);
-  }
-
-  CollectionReference<Map<String, dynamic>> get _messagesCollection =>
+  CollectionReference<Map<String, dynamic>> _messagesCollection(String chatId) =>
       FirebaseFirestore.instance
           .collection('chats')
-          .doc(_chatId)
+          .doc(chatId)
           .collection('messages');
 
   @override
@@ -60,11 +52,12 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _sendMessage() async {
     final text = _controller.text.trim();
     final user = _currentUser;
-    if (text.isEmpty || user == null || _chatId.isEmpty) {
+    if (text.isEmpty || user == null) {
       return;
     }
+    final chatId = buildPrivateChatId(user.uid, widget.peerId);
 
-    await _messagesCollection.add({
+    await _messagesCollection(chatId).add({
       'text': text,
       'senderId': user.uid,
       'receiverId': widget.peerId,
@@ -86,6 +79,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       );
     }
+    final chatId = buildPrivateChatId(user.uid, widget.peerId);
 
     return Scaffold(
       appBar: AppBar(
@@ -129,7 +123,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Expanded(
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream:
-                    _messagesCollection
+                    _messagesCollection(chatId)
                         .orderBy('createdAt', descending: true)
                         .snapshots(),
                 builder: (context, snapshot) {
