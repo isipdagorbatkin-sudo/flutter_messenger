@@ -14,3 +14,11 @@ String buildAvatarInitial(String value) {
   }
   return trimmed.substring(0, 1).toUpperCase();
 }
+
+String buildDisplayName(Map<String, dynamic> userData) {
+  final name = (userData['username'] as String?)?.trim();
+  if (name != null && name.isNotEmpty) {
+    return name;
+  }
+  return (userData['email'] as String?) ?? 'Unknown user';
+}

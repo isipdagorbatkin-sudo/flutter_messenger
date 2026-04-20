@@ -15,6 +15,6 @@ Use rules that only allow participants to access their chat:
 ```txt
 match /chats/{chatId}/messages/{messageId} {
   allow read, write: if request.auth != null
-    && chatId.split('_').hasAny([request.auth.uid]);
+    && request.auth.uid in chatId.split('_');
 }
 ```

@@ -20,4 +20,10 @@ void main() {
     expect(buildAvatarInitial('mai'), 'M');
     expect(buildAvatarInitial('🌸sakura'), '🌸');
   });
+
+  test('buildDisplayName picks username then email then fallback', () {
+    expect(buildDisplayName({'username': 'Mai', 'email': 'mai@test.com'}), 'Mai');
+    expect(buildDisplayName({'email': 'mai@test.com'}), 'mai@test.com');
+    expect(buildDisplayName(<String, dynamic>{}), 'Unknown user');
+  });
 }

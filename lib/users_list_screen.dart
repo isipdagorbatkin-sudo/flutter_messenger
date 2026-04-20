@@ -68,12 +68,8 @@ class UsersListScreen extends StatelessWidget {
               itemCount: users.length,
               itemBuilder: (context, index) {
                 final userData = users[index].data();
-                final name = (userData['username'] as String?)?.trim();
                 final avatarUrl = userData['imageUrl'] as String?;
-                final displayName =
-                    (name == null || name.isEmpty)
-                        ? (userData['email'] as String? ?? 'Unknown user')
-                        : name;
+                final displayName = buildDisplayName(userData);
 
                 return Card(
                   color: const Color(0xFF2B1A45),
