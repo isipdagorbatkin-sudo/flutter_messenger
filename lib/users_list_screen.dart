@@ -14,20 +14,19 @@ class UsersListScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Your Friends ✨'),
-        centerTitle: true,
         actions: [
           IconButton(
             onPressed: FirebaseAuth.instance.signOut,
-            icon: const Icon(Icons.exit_to_app),
+            icon: const Icon(Icons.logout_rounded),
           ),
         ],
       ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF1A102B), Color(0xFF2A1A45), Color(0xFF3A2056)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF120923), Color(0xFF27163B), Color(0xFF140D24)],
           ),
         ),
         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -56,54 +55,75 @@ class UsersListScreen extends StatelessWidget {
                     .toList(growable: false);
 
             if (users.isEmpty) {
-              return const Center(
-                child: Text(
-                  'No friends found yet 🌸',
-                  style: TextStyle(color: Color(0xFFBFA9D9), fontSize: 16),
-                ),
-              );
+              return const Center(child: _UsersEmptyState());
             }
 
-            return ListView.builder(
+            return ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 22),
               itemCount: users.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final userData = users[index].data();
                 final avatarUrl = userData['imageUrl'] as String?;
                 final displayName = buildDisplayName(userData);
+                final userId = users[index].id;
 
-                return Card(
-                  color: const Color(0xFF2B1A45),
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: ListTile(
+                return Material(
+                  color: const Color(0x7A2D1A44),
+                  elevation: 3,
+                  shadowColor: const Color(0x4014D6E9),
+                  borderRadius: BorderRadius.circular(22),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(22),
                     onTap: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder:
-                              (_) => ChatScreen(
-                                peerId: users[index].id,
+                        PageRouteBuilder(
+                          pageBuilder:
+                              (_, __, ___) => ChatScreen(
+                                peerId: userId,
                                 peerName: displayName,
                                 peerAvatarUrl: avatarUrl,
                               ),
+                          transitionsBuilder: (_, animation, __, child) {
+                            return FadeTransition(
+                              opacity: CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.easeOut,
+                              ),
+                              child: child,
+                            );
+                          },
                         ),
                       );
                     },
-                    leading: CircleAvatar(
-                      backgroundColor: const Color(0xFFFF8FD6),
-                      backgroundImage:
-                          avatarUrl != null && avatarUrl.isNotEmpty
-                              ? NetworkImage(avatarUrl)
-                              : null,
-                      child:
-                          avatarUrl == null || avatarUrl.isEmpty
-                              ? Text(
-                                buildAvatarInitial(displayName),
-                                style: const TextStyle(color: Color(0xFF2D163F)),
-                              )
-                              : null,
-                    ),
-                    title: Text(
-                      displayName,
-                      style: const TextStyle(color: Color(0xFFFFE8FA)),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      leading: Hero(
+                        tag: 'avatar-$userId',
+                        child: _ProfileAvatar(
+                          imageUrl: avatarUrl,
+                          displayName: displayName,
+                        ),
+                      ),
+                      title: Text(
+                        displayName,
+                        style: const TextStyle(
+                          color: Color(0xFFFFE8FA),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Tap to open private chat',
+                        style: TextStyle(color: Color(0xFFBCA3D6)),
+                      ),
+                      trailing: const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: Color(0xFF73ECFF),
+                        size: 16,
+                      ),
                     ),
                   ),
                 );
@@ -111,6 +131,74 @@ class UsersListScreen extends StatelessWidget {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({required this.imageUrl, required this.displayName});
+
+  final String? imageUrl;
+  final String displayName;
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      return CircleAvatar(backgroundImage: NetworkImage(imageUrl!), radius: 24);
+    }
+
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFF7BCB), Color(0xFF6EE5FF)],
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        buildAvatarInitial(displayName),
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+          fontSize: 18,
+        ),
+      ),
+    );
+  }
+}
+
+class _UsersEmptyState extends StatelessWidget {
+  const _UsersEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.people_alt_outlined, color: Color(0xFF7AE8FF), size: 52),
+          const SizedBox(height: 12),
+          const Text(
+            'No friends found yet',
+            style: TextStyle(
+              color: Color(0xFFFFE8FA),
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Invite someone to register and start chatting 🌸',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Color(0xFFBFA9D9)),
+          ),
+        ],
       ),
     );
   }
