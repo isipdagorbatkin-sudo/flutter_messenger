@@ -302,7 +302,7 @@ class _ChatEmptyState extends StatelessWidget {
         padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
+          children: const [
             Icon(Icons.forum_rounded, color: Color(0xFF7AE8FF), size: 52),
             SizedBox(height: 10),
             Text(

@@ -181,10 +181,10 @@ class _UsersEmptyState extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: const [
-          Icon(Icons.people_alt_outlined, color: Color(0xFF7AE8FF), size: 52),
-          SizedBox(height: 12),
-          Text(
+        children: [
+          const Icon(Icons.people_alt_outlined, color: Color(0xFF7AE8FF), size: 52),
+          const SizedBox(height: 12),
+          const Text(
             'No friends found yet',
             style: TextStyle(
               color: Color(0xFFFFE8FA),
@@ -192,8 +192,8 @@ class _UsersEmptyState extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          SizedBox(height: 6),
-          Text(
+          const SizedBox(height: 6),
+          const Text(
             'Invite someone to register and start chatting 🌸',
             textAlign: TextAlign.center,
             style: TextStyle(color: Color(0xFFBFA9D9)),
