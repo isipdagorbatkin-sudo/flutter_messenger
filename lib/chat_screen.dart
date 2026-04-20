@@ -147,6 +147,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final data = messages[index].data();
+                      final messageText = (data['text'] as String?)?.trim();
                       final isMe = data['senderId'] == user.uid;
                       final bubbleColor =
                           isMe
@@ -179,7 +180,9 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                (data['text'] as String?) ?? '',
+                                messageText != null && messageText.isNotEmpty
+                                    ? messageText
+                                    : '[Message unavailable]',
                                 style: const TextStyle(
                                   color: Color(0xFF2D163F),
                                   fontSize: 14,
