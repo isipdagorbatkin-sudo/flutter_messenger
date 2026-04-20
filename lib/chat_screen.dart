@@ -302,10 +302,10 @@ class _ChatEmptyState extends StatelessWidget {
         padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(Icons.forum_rounded, color: Color(0xFF7AE8FF), size: 52),
-            SizedBox(height: 10),
-            Text(
+          children: [
+            const Icon(Icons.forum_rounded, color: Color(0xFF7AE8FF), size: 52),
+            const SizedBox(height: 10),
+            const Text(
               'No messages yet',
               style: TextStyle(
                 color: Color(0xFFFFE8FA),
@@ -313,8 +313,8 @@ class _ChatEmptyState extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            SizedBox(height: 6),
-            Text(
+            const SizedBox(height: 6),
+            const Text(
               'Say hi and start your conversation 💫',
               style: TextStyle(color: Color(0xFFBFA9D9)),
             ),
