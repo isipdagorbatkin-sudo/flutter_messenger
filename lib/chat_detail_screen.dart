@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+const _chatImageWidth = 190.0;
+const _chatImageHeight = 120.0;
+const _cutePlaceholderImageUrl = 'https://placehold.co/190x120.png?text=Kawaii+Pic';
+
 enum ChatMessageType { text, image, voice }
 
 class ChatMessage {
@@ -8,12 +12,14 @@ class ChatMessage {
     required this.type,
     this.text,
     this.duration,
+    this.imageUrl,
   });
 
   final bool isMe;
   final ChatMessageType type;
   final String? text;
   final String? duration;
+  final String? imageUrl;
 }
 
 class ChatDetailScreen extends StatefulWidget {
@@ -31,7 +37,6 @@ class ChatDetailScreen extends StatefulWidget {
 }
 
 class _ChatDetailScreenState extends State<ChatDetailScreen> {
-  static const _imageUrl = 'https://placehold.co/320x200/png?text=Kawaii+Pic';
   final TextEditingController _controller = TextEditingController();
   String _draft = '';
 
@@ -46,7 +51,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       type: ChatMessageType.text,
       text: 'Always ready! What are we watching?',
     ),
-    ChatMessage(isMe: false, type: ChatMessageType.image),
+    ChatMessage(
+      isMe: false,
+      type: ChatMessageType.image,
+      imageUrl: _cutePlaceholderImageUrl,
+    ),
     ChatMessage(isMe: false, type: ChatMessageType.voice, duration: '0:18'),
     ChatMessage(
       isMe: true,
@@ -63,6 +72,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+    final cacheWidth = (_chatImageWidth * devicePixelRatio).round();
+    final cacheHeight = (_chatImageHeight * devicePixelRatio).round();
+
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
@@ -107,7 +120,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                               : const Color(0xFFEBD9FF),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: _buildMessageContent(message),
+                    child: _buildMessageContent(
+                      message,
+                      cacheWidth: cacheWidth,
+                      cacheHeight: cacheHeight,
+                    ),
                   ),
                 );
               },
@@ -123,7 +140,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
-  Widget _buildMessageContent(ChatMessage message) {
+  Widget _buildMessageContent(
+    ChatMessage message, {
+    required int cacheWidth,
+    required int cacheHeight,
+  }) {
     switch (message.type) {
       case ChatMessageType.text:
         return Text(
@@ -134,14 +155,33 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         return ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: Image.network(
-            _imageUrl,
-            width: 190,
-            height: 120,
+            message.imageUrl ?? _cutePlaceholderImageUrl,
+            width: _chatImageWidth,
+            height: _chatImageHeight,
             fit: BoxFit.cover,
+            cacheWidth: cacheWidth,
+            cacheHeight: cacheHeight,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) {
+                return child;
+              }
+
+              return Container(
+                width: _chatImageWidth,
+                height: _chatImageHeight,
+                color: const Color(0xFFFFF5FB),
+                alignment: Alignment.center,
+                child: const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              );
+            },
             errorBuilder:
-                (_, __, ___) => Container(
-                  width: 190,
-                  height: 120,
+                (context, error, stackTrace) => Container(
+                  width: _chatImageWidth,
+                  height: _chatImageHeight,
                   color: const Color(0xFFFFF5FB),
                   alignment: Alignment.center,
                   child: const Icon(
@@ -176,6 +216,12 @@ class _ChatInputBar extends StatelessWidget {
   final bool hasText;
   final ValueChanged<String> onChanged;
 
+  void _showComingSoon(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -186,7 +232,11 @@ class _ChatInputBar extends StatelessWidget {
         child: Row(
           children: [
             IconButton(
-              onPressed: () {},
+              onPressed:
+                  () => _showComingSoon(
+                    context,
+                    'Image picker will be added soon ✨',
+                  ),
               icon: const Icon(Icons.photo_camera_rounded),
               color: const Color(0xFFF05CA8),
             ),
@@ -211,7 +261,13 @@ class _ChatInputBar extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             IconButton(
-              onPressed: () {},
+              onPressed:
+                  () => _showComingSoon(
+                    context,
+                    hasText
+                        ? 'Message sending will be added soon ✨'
+                        : 'Voice recording will be added soon ✨',
+                  ),
               icon: Icon(
                 hasText ? Icons.send_rounded : Icons.mic_rounded,
                 color: const Color(0xFFF05CA8),
