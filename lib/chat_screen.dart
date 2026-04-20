@@ -7,11 +7,13 @@ class ChatMessage {
     required this.sender,
     required this.text,
     required this.userId,
+    this.createdAt,
   });
 
   final String sender;
   final String text;
   final String userId;
+  final DateTime? createdAt;
 }
 
 class ChatScreen extends StatefulWidget {
@@ -36,26 +38,36 @@ class _ChatScreenState extends State<ChatScreen> {
   Stream<List<ChatMessage>> _firestoreMessagesStream() {
     return FirebaseFirestore.instance
         .collection('messages')
-        .orderBy('createdAt', descending: true)
+        .orderBy('createdAt')
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
+      final messages = snapshot.docs.map((doc) {
         final data = doc.data();
-        final username = (data['username'] as String?)?.trim();
-        final email = (data['email'] as String?)?.trim();
-        final sender = (username?.isNotEmpty ?? false)
-            ? username!
-            : (email?.isNotEmpty ?? false)
-                ? email!
-                : 'Unknown';
+        final timestamp = data['createdAt'];
 
         return ChatMessage(
-          sender: sender,
+          sender: _extractSenderName(data),
           text: ((data['text'] as String?) ?? '').trim(),
           userId: (data['userId'] as String?) ?? '',
+          createdAt: timestamp is Timestamp ? timestamp.toDate() : null,
         );
       }).where((message) => message.text.isNotEmpty).toList();
+      return messages;
     });
+  }
+
+  String _extractSenderName(Map<String, dynamic> data) {
+    final username = (data['username'] as String?)?.trim();
+    if (username?.isNotEmpty ?? false) {
+      return username!;
+    }
+
+    final email = (data['email'] as String?)?.trim();
+    if (email?.isNotEmpty ?? false) {
+      return email!;
+    }
+
+    return 'Unknown';
   }
 
   @override
@@ -65,45 +77,59 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _sendMessage() async {
-    final text = _controller.text.trim();
-    if (text.isEmpty) {
-      return;
-    }
+    try {
+      final text = _controller.text.trim();
+      if (text.isEmpty) {
+        return;
+      }
 
-    if (widget.onSendMessage != null) {
-      await widget.onSendMessage!(text);
+      if (widget.onSendMessage != null) {
+        await widget.onSendMessage!(text);
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _controller.clear();
+        });
+        return;
+      }
+
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        if (!mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(content: Text('Please sign in to send messages')),
+          );
+        return;
+      }
+
+      await FirebaseFirestore.instance.collection('messages').add({
+        'text': text,
+        'createdAt': FieldValue.serverTimestamp(),
+        'userId': user.uid,
+        'username': user.displayName ?? '',
+        'email': user.email ?? '',
+      });
+
       if (!mounted) {
         return;
       }
-      setState(_controller.clear);
-      return;
-    }
-
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
+      setState(() {
+        _controller.clear();
+      });
+    } catch (error) {
+      debugPrint('Failed to send message: $error');
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Please sign in to send messages')),
-        );
-      return;
+        ..showSnackBar(const SnackBar(content: Text('Failed to send message')));
     }
-
-    await FirebaseFirestore.instance.collection('messages').add({
-      'text': text,
-      'createdAt': FieldValue.serverTimestamp(),
-      'userId': user.uid,
-      'username': user.displayName ?? '',
-      'email': user.email ?? '',
-    });
-
-    if (!mounted) {
-      return;
-    }
-    setState(_controller.clear);
   }
 
   @override
@@ -169,7 +195,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   }
 
                   return ListView.builder(
-                    reverse: true,
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
@@ -252,7 +277,7 @@ class _StyleAvatar extends StatelessWidget {
             radius: 12,
             backgroundColor: color.withOpacity(0.25),
             child: Text(
-              name.substring(0, 1),
+              name.isEmpty ? '?' : name.substring(0, 1),
               style: TextStyle(
                 color: color,
                 fontWeight: FontWeight.w700,
